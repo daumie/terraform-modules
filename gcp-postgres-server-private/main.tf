@@ -11,14 +11,12 @@ resource "random_id" "db_suffix" {
 
 resource "google_sql_database_instance" "this" {
 
-  provider = google-beta
+  provider = google
 
   name             = "${var.database_instance_name_stem}-${random_id.db_suffix.hex}"
   project          = data.google_project.this.project_id
   region           = var.region
   database_version = var.database_version
-
-  depends_on = [null_resource.dependency_getter]
 
 
   settings {
@@ -80,29 +78,6 @@ resource "google_sql_database_instance" "this" {
       DEFAULT_USER = local.default_db_user_name
       GCP_URL      = "https://www.googleapis.com/sql/v1beta4/projects/${data.google_project.this.project_id}/instances/${google_sql_database_instance.this.name}/users?host=&name=${local.default_db_user_name}"
     }
-  }
-
-  # Default timeouts are 10 minutes, which in most cases should be enough.
-  # Sometimes the database creation can, however, take longer, so we
-  # increase the timeouts slightly.
-  timeouts {
-    create = var.resource_timeout
-    delete = var.resource_timeout
-    update = var.resource_timeout
-  }
-}
-
-# ------------------------------------------------------------------------------
-# SET MODULE DEPENDENCY RESOURCE
-# This works around a terraform limitation where we can not specify module dependencies natively.
-# See https://github.com/hashicorp/terraform/issues/1178 for more discussion.
-# By resolving and computing the dependencies list, we are able to make all the resources in this module depend on the
-# resources backing the values in the dependencies list.
-# ------------------------------------------------------------------------------
-
-resource "null_resource" "dependency_getter" {
-  provisioner "local-exec" {
-    command = "echo ${length(var.dependencies)}"
   }
 }
 
