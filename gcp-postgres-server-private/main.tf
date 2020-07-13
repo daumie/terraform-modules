@@ -25,7 +25,6 @@ resource "google_sql_database_instance" "this" {
     tier              = "db-custom-${var.instance_cores}-${var.instance_memory_mbs}"
 
     backup_configuration {
-      binary_log_enabled = true
       enabled            = true
       start_time         = var.backup_start_time_utc
     }
