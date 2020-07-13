@@ -114,12 +114,6 @@ variable "maintenance_track" {
   default     = "stable"
 }
 
-variable "availability_type" {
-  description = "Can Be ZONAL or REGIONAL"
-  type        = string
-  default     = "REGIONAL"
-}
-
 variable "database_flags" {
   description = "List of Cloud SQL flags that are applied to the database server"
   type        = list(any)
