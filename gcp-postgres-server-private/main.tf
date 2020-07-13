@@ -1,4 +1,3 @@
-# Prepare locals
 locals {
   default_db_user_name = "postgres"
 }
@@ -10,28 +9,20 @@ resource "random_id" "db_suffix" {
 # Create the postgres database instance in workspace ( dev, prod1 or prod-asia)
 
 resource "google_sql_database_instance" "this" {
-
   provider = google
 
+  database_version = var.database_version
   name             = "${var.database_instance_name_stem}-${random_id.db_suffix.hex}"
   project          = data.google_project.this.project_id
   region           = var.region
-  database_version = var.database_version
-
 
   settings {
-    tier              = var.machine_type
-    activation_policy = var.activation_policy
     availability_type = var.availability_type
     disk_autoresize   = var.disk_autoresize
-
-    disk_size = var.disk_size
-    disk_type = var.disk_type
-
-    ip_configuration {
-      ipv4_enabled    = true
-      private_network = data.google_compute_network.this.self_link
-    }
+    activation_policy = var.activation_policy
+    disk_size         = var.disk_size_gb
+    disk_type         = var.disk_type
+    tier              = "db-custom-${var.instance_cores}-${var.instance_memory_mbs}"
 
     backup_configuration {
       binary_log_enabled = true
@@ -39,6 +30,10 @@ resource "google_sql_database_instance" "this" {
       start_time         = var.backup_start_time_utc
     }
 
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = data.google_compute_network.this.self_link
+    }
     location_preference {
       zone = var.database_zone
     }
@@ -48,7 +43,7 @@ resource "google_sql_database_instance" "this" {
       hour         = var.maintenance_hour
       update_track = var.maintenance_track
     }
-
+    
     dynamic "database_flags" {
 
       for_each = var.database_flags
@@ -57,11 +52,11 @@ resource "google_sql_database_instance" "this" {
         value = database_flags.value.value
       }
     }
-
+    
   }
-
-
-  provisioner "local-exec" {
+  
+  
+    provisioner "local-exec" {
     command = <<-EOT
       wget                                                           \
       --no-verbose                                                   \
@@ -78,6 +73,15 @@ resource "google_sql_database_instance" "this" {
       DEFAULT_USER = local.default_db_user_name
       GCP_URL      = "https://www.googleapis.com/sql/v1beta4/projects/${data.google_project.this.project_id}/instances/${google_sql_database_instance.this.name}/users?host=&name=${local.default_db_user_name}"
     }
+  }
+  
+  # Default timeouts are 10 minutes, which in most cases should be enough.
+  # Sometimes the database creation can, however, take longer, so we
+  # increase the timeouts slightly.
+  timeouts {
+    create = var.resource_timeout
+    delete = var.resource_timeout
+    update = var.resource_timeout
   }
 }
 

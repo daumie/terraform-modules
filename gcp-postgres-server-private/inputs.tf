@@ -1,3 +1,9 @@
+variable "availability_type" {
+  type = string
+
+  default = "REGIONAL"
+}
+
 variable "backup_enabled" {
   type = bool
 
@@ -25,21 +31,33 @@ variable "default_postgres_user_password_vault_path" {
 }
 
 variable "disk_autoresize" {
-  description = "Second Generation only. Configuration to increase storage size automatically."
-  type        = bool
-  default     = true
+  type = bool
+
+  default = true
 }
 
-variable "disk_size" {
-  description = "Second generation only. The size of data disk, in GB. Size of a running instance cannot be reduced but can be increased."
-  type        = number
-  default     = 10
+variable "disk_size_gb" {
+  type = number
+
+  default = 10
 }
 
 variable "disk_type" {
-  description = "The type of storage to use. Must be one of `PD_SSD` or `PD_HDD`."
-  type        = string
-  default     = "PD_SSD"
+  type = string
+
+  default = "PD_SSD"
+}
+
+variable "instance_cores" {
+  type = number
+
+  default = 1
+}
+
+variable "instance_memory_mbs" {
+  type = number
+
+  default = 3840
 }
 
 variable "maintenance_day" {
@@ -84,16 +102,10 @@ variable "region" {
 data "google_client_config" "this" {
   provider = google
 }
-
 variable "activation_policy" {
   description = "This specifies when the instance should be active. Can be either `ALWAYS`, `NEVER` or `ON_DEMAND`."
   type        = string
   default     = "ALWAYS"
-}
-
-variable "machine_type" {
-  description = "The machine type for the instances. See this page for supported tiers and pricing: https://cloud.google.com/sql/pricing"
-  type        = string
 }
 
 variable "maintenance_track" {
@@ -126,4 +138,8 @@ variable "database_zone" {
 }
 
 
-
+variable "resource_timeout" {
+  description = "Timeout for creating, updating and deleting database instances. Valid units of time are s, m, h."
+  type        = string
+  default     = "20m"
+}
